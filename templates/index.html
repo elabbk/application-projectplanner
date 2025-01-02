@@ -1,30 +1,171 @@
-<!doctype html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Hello Azure - Python Quickstart</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
-</head>
-<html>
-   <body>
-     <main>
-        <div class="px-4 py-3 my-2 text-center">
-            <img class="d-block mx-auto mb-4" src="{{ url_for('static', filename='images/azure-icon.svg') }}" alt="Azure Logo" width="192" height="192"/>
-            <!-- <img  src="/docs/5.1/assets/brand/bootstrap-logo.svg" alt="" width="72" height="57"> -->
-            <h1 class="display-6 fw-bold text-primary">Welcome to Azure</h1>            
-          </div>
-        <form method="post" action="{{url_for('hello')}}">
-            <div class="col-md-6 mx-auto text-center">
-                <label for="name" class="form-label fw-bold fs-5">Could you please tell me your name?</label>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sidebar with Dynamic Detail Views</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+    }
 
-                <!-- <p class="lead mb-2">Could you please tell me your name?</p> -->
-                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center align-items-center my-1">
-                    <input type="text" class="form-control" id="name" name="name" style="max-width: 256px;">
-                  </div>            
-                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center my-2">
-                  <button type="submit" class="btn btn-primary btn-lg px-4 gap-3">Say Hello</button>
-                </div>            
-            </div>
-        </form>
-     </main>      
-   </body>
+    /* Sidebar styles */
+    .sidebar {
+      width: 250px;
+      background-color: #2c3e50;
+      color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+    }
+
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .sidebar a:hover {
+      background-color: #34495e;
+    }
+
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+
+    .tooltip .tooltip-text {
+      visibility: hidden;
+      width: 120px;
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 5px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -60px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .tooltip:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .content {
+      flex: 1;
+      padding: 20px;
+    }
+
+    .add-button {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 10px;
+      margin: 10px 0;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    .add-button:hover {
+      background-color: #c0392b;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <a onclick="switchView('overview')" class="tooltip">
+      Overview
+      <span class="tooltip-text">Go to the overview page</span>
+    </a>
+    <a onclick="switchView('detail1')" class="tooltip">
+      Detail View 1
+      <span class="tooltip-text">View details 1</span>
+    </a>
+    <a onclick="switchView('detail2')" class="tooltip">
+      Detail View 2
+      <span class="tooltip-text">View details 2</span>
+    </a>
+    <button class="add-button tooltip" onclick="addDetailView()">
+      + Add Detail
+      <span class="tooltip-text">Add a new detail view</span>
+    </button>
+  </div>
+
+  <!-- Content Area -->
+  <div class="content" id="content">
+    <div id="overview">
+      <h1>Welcome to the Overview Page</h1>
+      <p>Select a detail view from the sidebar or click "+ Add Detail" to create a new one.</p>
+    </div>
+    <div id="detail1" class="hidden">
+      <h1>Detail View 1</h1>
+      <p>This is detail view number 1.</p>
+    </div>
+    <div id="detail2" class="hidden">
+      <h1>Detail View 2</h1>
+      <p>This is detail view number 2.</p>
+    </div>
+  </div>
+
+  <script>
+    let detailCount = 2; // Start with 2 detail views
+
+    function switchView(viewId) {
+      const contentSections = document.querySelectorAll('.content > div');
+      contentSections.forEach(section => {
+        if (section.id === viewId) {
+          section.classList.remove('hidden');
+        } else {
+          section.classList.add('hidden');
+        }
+      });
+    }
+
+    function addDetailView() {
+      detailCount++;
+      const sidebar = document.querySelector('.sidebar');
+
+      // Create a new link for the detail view
+      const newDetail = document.createElement('a');
+      newDetail.onclick = () => switchView(`detail${detailCount}`);
+      newDetail.className = 'tooltip';
+      newDetail.innerHTML = `Detail View ${detailCount}<span class="tooltip-text">View details ${detailCount}</span>`;
+
+      // Insert before the Add button
+      const addButton = document.querySelector('.add-button');
+      sidebar.insertBefore(newDetail, addButton);
+
+      // Update the content area
+      const content = document.getElementById('content');
+      const detailPage = document.createElement('div');
+      detailPage.id = `detail${detailCount}`;
+      detailPage.className = 'hidden';
+      detailPage.innerHTML = `<h1>Detail View ${detailCount}</h1><p>This is detail view number ${detailCount}.</p>`;
+
+      // Append the new detail page content
+      content.appendChild(detailPage);
+    }
+  </script>
+</body>
 </html>

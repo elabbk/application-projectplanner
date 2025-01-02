@@ -75,4 +75,16 @@ jobs:
         with:
           app-name: 'application-projectplanner'
           slot-name: 'Production'
-          
+
+      - name: Retrieve DATABASE_URL from Azure
+        id: get-database-url
+        run: |
+          DATABASE_URL=$(az webapp config appsettings list --name <your-app-service-name> --resource-group <your-resource-group> --query "[?name=='DATABASE_URL'].value" -o tsv)
+          echo "DATABASE_URL=$DATABASE_URL" >> $GITHUB_ENV
+
+      - name: Initialize Database
+        run: |
+          source env/bin/activate
+          python create_tables.py
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}

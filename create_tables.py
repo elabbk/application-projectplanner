@@ -20,6 +20,7 @@ def main():
         cursor = conn.cursor()
 
         # Execute the SQL to create the table
+        cursor.execute("DROP TABLE user_views;")
         cursor.execute(CREATE_TABLE_SQL)
         conn.commit()
 

@@ -3,3 +3,7 @@ gunicorn
 Werkzeug==2.2.2
 psycopg2-binary
 flask-sqlalchemy
+Flask-Migrate
+flask_wtf
+python-dotenv
+SQLAlchemy

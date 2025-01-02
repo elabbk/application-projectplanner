@@ -1,5 +1,5 @@
 Flask==2.2.2
 gunicorn
 Werkzeug==2.2.2
-psycop2
+psycopg2
 flask-sqlalchemy

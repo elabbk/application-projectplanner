@@ -1,8 +1,14 @@
 import os
 import subprocess
 
-# Database connection details (retrieved from environment variables)
-DATABASE_URL = os.getenv('DATABASE_URL')
+# Get the database connection details from environment variables
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_NAME = os.getenv("DB_NAME")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+if not all([DB_HOST, DB_USER, DB_NAME, DB_PASSWORD]):
+    raise ValueError("One or more required environment variables are missing: DB_HOST, DB_USER, DB_NAME, DB_PASSWORD.")
 
 # SQL to create the table
 CREATE_TABLE_SQL = """

@@ -142,30 +142,50 @@
       });
     }
 
-    function addDetailView() {
-      detailCount++;
-      const sidebar = document.querySelector('.sidebar');
+const API_BASE_URL = "application-projectplanner-cpfwgpgvafavc2c7.germanywestcentral-01.azurewebsites.net/api";
 
-      // Create a new link for the detail view
+async function fetchViews(userId) {
+  const response = await fetch(`${API_BASE_URL}/views?userId=${userId}`);
+  if (response.ok) {
+    const views = await response.json();
+    const sidebar = document.querySelector('.sidebar');
+
+    // Populate sidebar with user-specific views
+    views.forEach(view => {
       const newDetail = document.createElement('a');
-      newDetail.onclick = () => switchView(`detail${detailCount}`);
+      newDetail.textContent = view.view_name;
+      newDetail.onclick = () => switchView(view.view_name);
       newDetail.className = 'tooltip';
-      newDetail.innerHTML = `Detail View ${detailCount}<span class="tooltip-text">View details ${detailCount}</span>`;
+      newDetail.innerHTML = `${view.view_name}<span class="tooltip-text">View details for ${view.view_name}</span>`;
+      sidebar.appendChild(newDetail);
+    });
+  }
+}
+    
+    
+async function addDetailView(userId) {
+  const viewName = `Detail View ${detailCount}`;
+  const response = await fetch(`${API_BASE_URL}/views`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, viewName }),
+  });
 
-      // Insert before the Add button
-      const addButton = document.querySelector('.add-button');
-      sidebar.insertBefore(newDetail, addButton);
+  if (response.ok) {
+    const newView = await response.json();
+    const sidebar = document.querySelector('.sidebar');
+    const newDetail = document.createElement('a');
+    newDetail.textContent = newView.view_name;
+    newDetail.onclick = () => switchView(newView.view_name);
+    newDetail.className = 'tooltip';
+    newDetail.innerHTML = `${newView.view_name}<span class="tooltip-text">View details for ${newView.view_name}</span>`;
+    sidebar.appendChild(newDetail);
+    detailCount++;
+  } else {
+    alert('Failed to add view!');
+  }
+}
 
-      // Update the content area
-      const content = document.getElementById('content');
-      const detailPage = document.createElement('div');
-      detailPage.id = `detail${detailCount}`;
-      detailPage.className = 'hidden';
-      detailPage.innerHTML = `<h1>Detail View ${detailCount}</h1><p>This is detail view number ${detailCount}.</p>`;
-
-      // Append the new detail page content
-      content.appendChild(detailPage);
-    }
   </script>
 </body>
 </html>

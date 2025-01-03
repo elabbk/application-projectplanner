@@ -6,7 +6,7 @@ from app import db
 class Views(db.Model):
     __tablename__ = 'views'
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer)
+    user_id = Column(String(50))
     project_id = Column(Integer, ForeignKey('projects.project_id', ondelete="CASCADE"))
     Bookmark = Column(Boolean)
 

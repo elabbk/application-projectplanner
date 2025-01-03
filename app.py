@@ -42,9 +42,30 @@ def index():
     views = Views.query.all()
     return render_template('index.html', views=views)
 
+@app.route('/api/user_projects', methods=['GET'])
+def get_user_projects():
+    username = request.args.get('username')
+    if not username:
+        return jsonify({"error": "Username is required"}), 400
+
+    try:
+        # Query projects associated with the user via the views table
+        user_projects = db.session.query(Projects).join(Views).filter(Views.user_id == username).all()
+
+        # Serialize the project data
+        projects_data = [
+            {"id": project.project_id, "name": project.project_name}
+            for project in user_projects
+        ]
+
+        return jsonify({"projects": projects_data}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/projects', methods=['POST'])
 def create_project():
     data = request.json
+    username = data.get('username')  # Get the username from the request body
     try:
         # Create a new project object
         new_project = Projects(
@@ -55,10 +76,24 @@ def create_project():
         )
         # Add the project to the database
         db.session.add(new_project)
+        db.session.flush()  # Flush to get the project ID before committing
+
+        # Create a new entry in the views table
+        new_view = Views(
+            user_id=username,
+            project_id=new_project.project_id,
+            Bookmark=True
+        )
+        db.session.add(new_view)
+
+        # Commit the transaction
         db.session.commit()
+
         return jsonify({"message": "Project created successfully!", "project": data}), 201
     except Exception as e:
+        db.session.rollback()  # Roll back the transaction in case of error
         return jsonify({"error": str(e)}), 400
+
 """
 @app.route('/<int:id>', methods=['GET'])
 def details(id):

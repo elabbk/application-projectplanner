@@ -21,6 +21,9 @@
             left: 0;
             z-index: 1000;
         }
+        #topbar > button, #topbar > div {
+            margin-left: 15px; /* Add space between settings and user */
+        }
         #displayUsername {
             cursor: pointer;
             color: #007bff;
@@ -173,35 +176,38 @@
 
             submitUsername.addEventListener('click', updateUsername);
 
-            // Reopen modal to reenter username (attach to the whole container)
-            if (usernameDisplayContainer) {
-                usernameDisplayContainer.addEventListener('click', () => {
-                    usernameInput.value = ''; // Clear input
-                    usernameModal.show();    // Show modal
-                });
-            } else {
-                console.error('usernameDisplayContainer element not found in the DOM.');
-            }
-        });
+            // Reopen username modal on username click
 
-            // Load user projects dynamically
+            usernameDisplay.addEventListener('click', () => {
+                console.log('Username clicked');
+                usernameInput.value = ''; // Clear the input field
+                usernameModal.show();
+            });
+
             function loadUserProjects(user) {
-                // Replace this block with an actual AJAX request to fetch projects
-                const projects = [
-                    { id: 1, name: 'Project Alpha' },
-                    { id: 2, name: 'Project Beta' }
-                ];
-
-                projectsList.innerHTML = '';
-                projects.forEach(project => {
-                    const projectLink = document.createElement('div');
-                    projectLink.className = 'sidebar-item';
-                    projectLink.textContent = project.name;
-                    projectLink.addEventListener('click', () => {
-                        displayProjectDetails(project);
+                fetch(`/api/user_projects?username=${encodeURIComponent(user)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to load projects');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const projects = data.projects;
+                        projectsList.innerHTML = ''; // Clear existing projects
+                        projects.forEach(project => {
+                            const projectLink = document.createElement('div');
+                            projectLink.className = 'sidebar-item';
+                            projectLink.textContent = project.name;
+                            projectLink.addEventListener('click', () => {
+                                displayProjectDetails(project);
+                            });
+                            projectsList.appendChild(projectLink);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching user projects:', error);
                     });
-                    projectsList.appendChild(projectLink);
-                });
             }
 
             // Display project details
@@ -228,6 +234,7 @@
                     status: document.getElementById('projectStatus').value,
                     tag: document.getElementById('projectTag').value,
                     startDate: document.getElementById('projectStartDate').value,
+                    username: username // Include the username in the request
                 };
 
                 try {

@@ -1,1 +1,4 @@
-Single-database configuration for Flask.
+1. On your local installation of PostgreSQL, create an empty db.
+2. In your Python IDE, git clone -b starter-no-infra https://github.com/elabbk/projectplanner
+3. Adjust azureproject/deveopment.py to your database settings from PostgreSQL.
+Execute flask run in the terminal.

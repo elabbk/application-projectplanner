@@ -65,33 +65,40 @@ def get_user_projects():
 @app.route('/api/projects', methods=['POST'])
 def create_project():
     data = request.json
-    username = data.get('username')  # Get the username from the request body
+    username = data.get('username')  # Get the username from the request
+
     try:
+        # Set default values for optional fields if not provided
+        project_status = data.get('status', 'Pending')
+        project_tag = data.get('tag', '')
+
         # Create a new project object
         new_project = Projects(
             project_name=data['name'],
-            status=data['status'],
-            tag=data['tag'],
-            start_date=datetime.strptime(data['startDate'], '%Y-%m-%d')
+            status=project_status,
+            tag=project_tag,
+            proj_start_date=datetime.strptime(data['startDate'], '%Y-%m-%d'),
+            proj_end_date=datetime.strptime(data.get('endDate', data['startDate']), '%Y-%m-%d')
         )
-        # Add the project to the database
         db.session.add(new_project)
-        db.session.flush()  # Flush to get the project ID before committing
+        db.session.flush()  # Get the project ID before committing
 
         # Create a new entry in the views table
         new_view = Views(
             user_id=username,
             project_id=new_project.project_id,
-            Bookmark=True
+            bookmark=True,
+            read=True,
+            write=True,
+            delete=False,
+            archive=False
         )
         db.session.add(new_view)
-
-        # Commit the transaction
         db.session.commit()
 
         return jsonify({"message": "Project created successfully!", "project": data}), 201
     except Exception as e:
-        db.session.rollback()  # Roll back the transaction in case of error
+        db.session.rollback()
         return jsonify({"error": str(e)}), 400
 
 """

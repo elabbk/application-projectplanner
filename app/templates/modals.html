@@ -1,0 +1,52 @@
+<!-- Initial Username Prompt Modal -->
+<div class="modal" id="usernameModal" tabindex="-1" aria-hidden="true" aria-labelledby="usernameModalLabel">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="usernameModalLabel">Enter Your Username</h5>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="usernameInput" class="form-control" placeholder="Enter your username">
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="submitUsername" class="btn btn-primary">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create New Project Modal -->
+<div class="modal" id="createProjectModal" tabindex="-1" aria-hidden="true" aria-labelledby="createProjectModalLabel">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createProjectModalLabel">Create New Project</h5>
+            </div>
+            <div class="modal-body">
+                <form id="createProjectForm">
+                    <div class="mb-3">
+                        <label for="projectName" class="form-label">Project Name</label>
+                        <input type="text" id="projectName" class="form-control" placeholder="Enter project name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectStatus" class="form-label">Status (Optional)</label>
+                        <input type="text" id="projectStatus" class="form-control" placeholder="Enter project status">
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectTag" class="form-label">Programme or Label (Optional)</label>
+                        <input type="text" id="projectTag" class="form-control" >
+                    </div>
+                    <div class="mb-3">
+                        <label for="projectStartDate" class="form-label">Start Date</label>
+                        <input type="date" id="projectStartDate" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="projectEndDate" class="form-label">End Date</label>
+                      <input type="date" id="projectEndDate" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

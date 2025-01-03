@@ -1,7 +1,8 @@
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Boolean
 from sqlalchemy.orm import validates
 
-from app import db
+from .db import db
+
 
 class Views(db.Model):
     __tablename__ = 'views'

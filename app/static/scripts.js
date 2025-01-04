@@ -122,4 +122,136 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Failed to create project. Please try again.');
         }
     });
+
+    // Initialize modals for creating and editing items
+    const createItemModal = new bootstrap.Modal(document.getElementById('createItemModal'));
+    const editItemModal = new bootstrap.Modal(document.getElementById('editItemModal'));
+    const removeItemModal = new bootstrap.Modal(document.getElementById('removeItemModal'));
+
+    // Handle Create Item button click
+    document.getElementById('createItemButton').addEventListener('click', () => {
+        createItemModal.show();
+    });
+
+    // Handle Edit Item button click
+    document.getElementById('editItemButton').addEventListener('click', () => {
+        const projectId = document.getElementById('editProjectId').value;
+        fetch(`/api/items/${projectId}`)
+            .then(response => response.json())
+            .then(data => {
+                const dropdown = document.getElementById('editItemDropdown');
+                dropdown.innerHTML = ''; // Clear existing options
+                data.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = item.name;
+                    dropdown.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching items:', error));
+
+        editItemModal.show();
+    });
+
+    // Handle Remove Item button click
+    document.getElementById('removeItemButton').addEventListener('click', () => {
+        const projectId = document.getElementById('editProjectId').value;
+        fetch(`/api/items/${projectId}`)
+            .then(response => response.json())
+            .then(data => {
+                const dropdown = document.getElementById('removeItemDropdown');
+                dropdown.innerHTML = ''; // Clear existing options
+                data.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = item.name;
+                    dropdown.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching items:', error));
+
+        removeItemModal.show();
+    });
+
+    // Handle Create Item form submission
+    document.getElementById('createItemForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const projectId = document.getElementById('projectId').value;
+        const itemData = {
+            project_id: projectId,
+            item_name: document.getElementById('itemName').value,
+            type: document.getElementById('itemType').value
+        };
+
+        try {
+            const response = await fetch('/api/items', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(itemData)
+            });
+
+            if (response.ok) {
+                alert('Item created successfully!');
+                createItemModal.hide();
+            } else {
+                alert('Error creating item');
+            }
+        } catch (error) {
+            console.error('Error creating item:', error);
+        }
+    });
+
+    // Handle Edit Item form submission
+    document.getElementById('editItemForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const itemId = document.getElementById('editItemDropdown').value;
+        const updatedItemData = {
+            item_name: document.getElementById('editItemName').value,
+            type: document.getElementById('editItemType').value
+        };
+
+        try {
+            const response = await fetch(`/api/items/${itemId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedItemData)
+            });
+
+            if (response.ok) {
+                alert('Item updated successfully!');
+                editItemModal.hide();
+            } else {
+                alert('Error updating item');
+            }
+        } catch (error) {
+            console.error('Error updating item:', error);
+        }
+    });
+
+    // Handle Remove Item form submission
+    document.getElementById('removeItemForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const itemId = document.getElementById('removeItemDropdown').value;
+
+        try {
+            const response = await fetch(`/api/items/${itemId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                alert('Item removed successfully!');
+                removeItemModal.hide();
+
+                // Optionally refresh the item list
+                const projectId = document.getElementById('removeProjectId').value;
+                loadProjectItems(projectId);
+            } else {
+                alert('Error removing item');
+            }
+        } catch (error) {
+            console.error('Error removing item:', error);
+            alert('Failed to remove item. Please try again.');
+        }
+    });
+
 });

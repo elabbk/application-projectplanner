@@ -2,5 +2,134 @@
 
 {% block content %}
 <h1>{{ project.project_name }}</h1>
+
+<!-- Display project start and end dates -->
+<p><strong>Start Date:</strong> {{ project_start_date }}</p>
+<p><strong>End Date:</strong> {{ project_end_date }}</p>
+
+<!-- Buttons for creating, editing, and removing items -->
+<div class="mb-3">
+    <button id="createItemButton" class="btn btn-primary">Create Item</button>
+    <button id="editItemButton" class="btn btn-secondary">Edit Item</button>
+    <button id="removeItemButton" class="btn btn-danger">Remove Item</button>
+</div>
+
+<!-- Create Item Modal -->
+<div class="modal" id="createItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createItemForm">
+                    <input type="hidden" id="projectId" value="{{ project.project_id }}">
+                    <div class="mb-3">
+                        <label for="itemName" class="form-label">Item Name</label>
+                        <input type="text" class="form-control" id="itemName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="itemType" class="form-label">Type</label>
+                        <select class="form-select" id="itemType">
+                            <option value="cost" selected>Cost</option>
+                            <option value="budget">Budget</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <input type="number" class="form-control" id="amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <input type="text" class="form-control" id="category" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="startDate" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="startDate" value="{{ project_start_date }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="endDate" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="endDate" value="{{ project_end_date }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Item Modal -->
+<div class="modal" id="editItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editItemForm">
+                    <input type="hidden" id="editProjectId" value="{{ project.project_id }}">
+                    <div class="mb-3">
+                        <label for="editItemDropdown" class="form-label">Select Item</label>
+                        <select id="editItemDropdown" class="form-select" required></select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editItemName" class="form-label">Item Name</label>
+                        <input type="text" class="form-control" id="editItemName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editItemType" class="form-label">Type</label>
+                        <select class="form-select" id="editItemType">
+                            <option value="cost">Cost</option>
+                            <option value="budget">Budget</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAmount" class="form-label">Amount</label>
+                        <input type="number" class="form-control" id="editAmount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCategory" class="form-label">Category</label>
+                        <input type="text" class="form-control" id="editCategory" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editStartDate" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="editStartDate">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEndDate" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="editEndDate">
+                    </div>
+                    <button type="submit" class="btn btn-secondary">Update</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Remove Item Modal -->
+<div class="modal" id="removeItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Remove Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="removeItemForm">
+                    <input type="hidden" id="removeProjectId" value="{{ project.project_id }}">
+                    <div class="mb-3">
+                        <label for="removeItemDropdown" class="form-label">Select Item to Remove</label>
+                        <select id="removeItemDropdown" class="form-select" required></select>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Remove</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <iframe src="/dash/project/?project_id={{ project.project_id }}" style="border: none; width: 100%; height: 600px;"></iframe>
 {% endblock %}

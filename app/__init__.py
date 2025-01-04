@@ -2,6 +2,7 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from jinja2 import Environment, PackageLoader, select_autoescape
 from .dashboards import register_dash_apps
 from .routes import main
 from .db import db

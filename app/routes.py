@@ -18,8 +18,17 @@ def overview():
 @main.route('/project/<int:project_id>')
 def project_detail(project_id):
     project = Projects.query.get_or_404(project_id)
-    items = Items.query.filter_by(project_id=project_id).all()
-    return render_template('project.html', title=project.project_name, project=project, items=items)
+
+    project_start_date = project.proj_start_date.strftime('%Y-%m-%d') if project.proj_start_date else None
+    project_end_date = project.proj_end_date.strftime('%Y-%m-%d') if project.proj_end_date else None
+
+    return render_template(
+        'project.html',
+        title=project.project_name,
+        project=project,
+        project_start_date=project_start_date,
+        project_end_date=project_end_date
+    )
 
 
 @main.route('/api/user_projects', methods=['GET'])
@@ -81,6 +90,53 @@ def create_project():
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
 
+# API to create a new item
+@main.route('/api/items', methods=['POST'])
+def create_item():
+    data = request.json
+    new_item = Items(
+        project_id=data['project_id'],
+        item_name=data['item_name'],
+        type=data['type']
+    )
+    db.session.add(new_item)
+    db.session.commit()
+    return jsonify({"message": "Item created successfully!"}), 201
+
+@main.route('/api/items/<int:item_id>', methods=['DELETE'])
+def delete_item(item_id):
+    item = Items.query.get(item_id)
+    if not item:
+        return jsonify({"error": "Item not found"}), 404
+
+    try:
+        db.session.delete(item)
+        db.session.commit()
+        return jsonify({"message": "Item removed successfully!"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route('/api/items/<int:project_id>', methods=['GET'])
+def get_project_items(project_id):
+    items = Items.query.filter_by(project_id=project_id).all()
+    items_data = [
+        {
+            "id": item.item_id,
+            "name": item.item_name,
+            "type": item.type,
+            "amount": item.amount,
+            "category": item.category,
+            "start_date": item.item_start_date.strftime('%Y-%m-%d'),
+            "end_date": item.item_end_date.strftime('%Y-%m-%d'),
+        }
+        for item in items
+    ]
+    return jsonify({"items": items_data}), 200
+
+"""
+#1. 
 @main.route('/api/project_items', methods=['GET'])
 def get_project_items():
     project_id = request.args.get('projectId')
@@ -176,3 +232,4 @@ def get_net_position():
         net_position = total_budget - total_cost
 
     return jsonify({"net_position": net_position}), 200
+"""

@@ -18,7 +18,8 @@ def overview():
 @main.route('/project/<int:project_id>')
 def project_detail(project_id):
     project = Projects.query.get_or_404(project_id)
-    return render_template('project.html', title=project.project_name, project=project)
+    items = Items.query.filter_by(project_id=project_id).all()
+    return render_template('project.html', title=project.project_name, project=project, items=items)
 
 
 @main.route('/api/user_projects', methods=['GET'])

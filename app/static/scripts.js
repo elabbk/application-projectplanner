@@ -34,20 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
         location.reload();
     });
 
-    // Handle Overview click to prevent full page reload
-    document.getElementById('overview').addEventListener('click', () => {
-        const content = document.getElementById('content');
-        content.innerHTML = `
-            <h1>Overview</h1>
-            <p>Welcome to your project overview. Please select a project from the sidebar.</p>
-        `;
-
-        const username = localStorage.getItem('username');
-        if (username) {
-            loadUserProjects(username);
-        } else {
-            alert('Please set your username first.');
-        }
+    // Handle Overview click to reload the overview page
+    document.getElementById('overview').addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = '/overview';
     });
 
     // Function to load user projects
@@ -64,11 +54,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 projectsList.innerHTML = ''; // Clear existing projects
                 data.projects.forEach(project => {
                     const projectLink = document.createElement('div');
-                    projectLink.className = 'sidebar-item';
+                    projectLink.className = 'sidebar-item mb-2';
                     projectLink.textContent = project.name;
+
+                    // Add click event to navigate to the project page
                     projectLink.addEventListener('click', () => {
-                        displayProjectDetails(project);
+                        window.location.href = `/project/${project.id}`;
                     });
+
                     projectsList.appendChild(projectLink);
                 });
             })

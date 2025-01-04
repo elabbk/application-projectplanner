@@ -13,7 +13,7 @@ def init_project_dash(server):
         dcc.Graph(
             id="project-graph",
             figure={
-                "data": [{"x": [1, 2, 3], "y": [4, 1, 2], "type": "bar", "name": "Project Example"}],
+                "data": [{"project_id": [1, 2, 3], "y": [4, 1, 2], "type": "bar", "name": "Example"}],
                 "layout": {"title": "Project Example"}
             }
         )

@@ -8,6 +8,7 @@ from .db import db
 
 migrate = Migrate()
 
+
 def create_app():
     app = Flask(__name__)
 

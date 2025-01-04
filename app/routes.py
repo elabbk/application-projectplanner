@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, jsonify
+
+from .dashboards import project_dash
 from .models import Projects, Views, Items
 from datetime import datetime
 from .db import db
-
 
 # Define the blueprint for the main routes
 main = Blueprint('main', __name__)
@@ -11,8 +12,6 @@ main = Blueprint('main', __name__)
 @main.route('/overview')
 def overview():
     print('Request for index page received')
-    views = Views.query.all()
-
     return render_template('index.html', title="Overview")
 
 @main.route('/project/<int:project_id>')
@@ -58,7 +57,7 @@ def create_project():
 
     try:
         # Set default values for optional fields if not provided
-        project_status = data.get('status', 'Pending')
+        project_status = data.get('status', '')
         project_tag = data.get('tag', '')
 
         # Create a new project object
@@ -90,18 +89,28 @@ def create_project():
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
 
-# API to create a new item
 @main.route('/api/items', methods=['POST'])
 def create_item():
     data = request.json
-    new_item = Items(
-        project_id=data['project_id'],
-        item_name=data['item_name'],
-        type=data['type']
-    )
-    db.session.add(new_item)
-    db.session.commit()
-    return jsonify({"message": "Item created successfully!"}), 201
+    try:
+        new_item = Items(
+            item_name=data['item_name'],
+            type=data['type'],
+            project_id=data['project_id'],
+            amount=data['amount'],
+            category=data['category'],
+            item_tag=data['item_tag'],
+            item_start_date=datetime.strptime(data['startDate'], '%Y-%m-%d'),
+            item_end_date=datetime.strptime(data['endDate'], '%Y-%m-%d')
+        )
+        db.session.add(new_item)
+        db.session.commit()
+        return jsonify({"message": "Item created successfully!"}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400
+
+
 
 @main.route('/api/items/<int:item_id>', methods=['DELETE'])
 def delete_item(item_id):
@@ -118,22 +127,39 @@ def delete_item(item_id):
         return jsonify({"error": str(e)}), 500
 
 
-@main.route('/api/items/<int:project_id>', methods=['GET'])
-def get_project_items(project_id):
-    items = Items.query.filter_by(project_id=project_id).all()
-    items_data = [
-        {
-            "id": item.item_id,
-            "name": item.item_name,
-            "type": item.type,
-            "amount": item.amount,
-            "category": item.category,
-            "start_date": item.item_start_date.strftime('%Y-%m-%d'),
-            "end_date": item.item_end_date.strftime('%Y-%m-%d'),
-        }
-        for item in items
-    ]
-    return jsonify({"items": items_data}), 200
+# Route to get items for a specific project
+@main.route('/api/project_items', methods=['GET'])
+def get_project_items():
+    project_id = request.args.get('projectId')
+    if not project_id:
+        return jsonify({"error": "Project ID is required"}), 400
+
+    try:
+        # Query items for the given project ID
+        items = Items.query.filter_by(project_id=project_id).all()
+
+        # Serialize the items data
+        items_data = [
+            {
+                "id": item.item_id,
+                "name": item.item_name,
+                "type": item.type,
+                "amount": item.amount,
+                "category": item.category,
+                "tag": item.item_tag,
+                "start_date": item.item_start_date.strftime('%Y-%m-%d') if item.item_start_date else None,
+                "end_date": item.item_end_date.strftime('%Y-%m-%d') if item.item_end_date else None
+            }
+            for item in items
+        ]
+
+        return jsonify({"items": items_data}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def register_dash_apps(app):
+    init_project_dash(app)
 
 """
 #1. 

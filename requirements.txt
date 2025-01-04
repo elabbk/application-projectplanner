@@ -4,6 +4,7 @@ Flask-SQLAlchemy
 flask_wtf
 psycopg2
 python-dotenv
+pandas
 SQLAlchemy
 dash
 dash_bootstrap_components

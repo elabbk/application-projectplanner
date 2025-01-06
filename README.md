@@ -31,4 +31,6 @@ For running this small application, you need a device (laptop), virtual machine,
    ```bash
    flask run
    ```
+   
+The project is based on a sample application. Contributions from other authors that are not mine can be seen in the git history. 
 

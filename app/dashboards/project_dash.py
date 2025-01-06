@@ -26,7 +26,7 @@ NET_COLORS = {
 def init_project_dash(server):
     # Preload default project dates
     # Use dummy default dates for layout initialization
-    default_start_date = "2025-02-01"
+    default_start_date = "2025-01-01"
     default_end_date = "2026-12-31"
 
     dash_app = Dash(
@@ -150,14 +150,30 @@ def init_project_dash(server):
 
         # Apply category filter if categories are selected
         if categories:
-            cost_df = df[(df["Type"] == "cost") & ((df["Start Date"] <= end_date) & (df["End Date"] >= start_date)) & (
-                df["Category"].isin(categories))]
-            budget_df = df[
-                (df["Type"] == "budget") & ((df["Start Date"] <= end_date) & (df["End Date"] >= start_date)) & (
-                    df["Category"].isin(categories))]
+            filtered_df = df[df["Category"].isin(categories)]
         else:
-            cost_df = df[(df["Type"] == "cost") & ((df["Start Date"] <= end_date) & (df["End Date"] >= start_date))]
-            budget_df = df[(df["Type"] == "budget") & ((df["Start Date"] <= end_date) & (df["End Date"] >= start_date))]
+            filtered_df = df
+
+        # Group by category if the group-by-category option is selected
+        if "group" in group_by_category:
+            cost_df = filtered_df[filtered_df["Type"] == "cost"].groupby("Category").agg({
+                "Amount": "sum",
+                "Start Date": "min",
+                "End Date": "max"
+            }).reset_index()
+
+            budget_df = filtered_df[filtered_df["Type"] == "budget"].groupby("Category").agg({
+                "Amount": "sum",
+                "Start Date": "min",
+                "End Date": "max"
+            }).reset_index()
+
+            # Modify item names for grouped data
+            cost_df["Item Name"] = cost_df["Category"] + " (Cost)"
+            budget_df["Item Name"] = budget_df["Category"] + " (Budget)"
+        else:
+            cost_df = filtered_df[(filtered_df["Type"] == "cost") & ((filtered_df["Start Date"] <= end_date) & (filtered_df["End Date"] >= start_date))]
+            budget_df = filtered_df[(filtered_df["Type"] == "budget") & ((filtered_df["Start Date"] <= end_date) & (filtered_df["End Date"] >= start_date))]
 
         # Calculate net position based on filtered budgets and costs
         net_value = budget_df["Amount"].sum() - cost_df["Amount"].sum()

@@ -36,20 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
         location.reload();
     });
 
-    // Handle Overview click to prevent full page reload
+    // Handle Overview click to navigate to the index page
     document.getElementById('overview').addEventListener('click', () => {
-        const content = document.getElementById('content');
-        content.innerHTML = `
-            <h1>Overview</h1>
-            <p>Welcome to your project overview. Please select a project from the sidebar.</p>
-        `;
-
-        const username = localStorage.getItem('username');
-        if (username) {
-            loadUserProjects(username);
-        } else {
-            alert('Please set your username first.');
-        }
+        window.location.href = '/';
     });
 
     // Function to load user projects

@@ -1,4 +1,4 @@
-from dash import Dash, html, dcc, Input, Output, State
+from dash import Dash, html, dcc, Input, Output, no_update, State
 from flask_sqlalchemy import SQLAlchemy
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -6,6 +6,7 @@ import pandas as pd
 from urllib.parse import urlparse, parse_qs
 from ..db import db
 from ..models import Items, Projects
+
 
 # Map category names to hex color codes
 CATEGORY_COLORS = {
@@ -16,8 +17,18 @@ CATEGORY_COLORS = {
     "internal FTE": "#9467bd",
     "other": "#8c564b"
 }
+NET_COLORS = {
+    "Net Position Negative": "red",
+    "Net Position within 80-100% of budget": "green",
+    "Net Position <80% of budget": "blue"
+}
 
 def init_project_dash(server):
+    # Preload default project dates
+    # Use dummy default dates for layout initialization
+    default_start_date = "2025-02-01"
+    default_end_date = "2026-12-31"
+
     dash_app = Dash(
         server=server,
         name="Project Dashboard",
@@ -31,8 +42,8 @@ def init_project_dash(server):
         html.Div([
             dcc.DatePickerRange(
                 id="date-picker-range",
-                start_date_placeholder_text="Start Date",
-                end_date_placeholder_text="End Date",
+                start_date=default_start_date,
+                end_date=default_end_date,
                 style={"margin-bottom": "20px"}
             ),
         ], style={"margin-bottom": "20px"}),
@@ -65,6 +76,17 @@ def init_project_dash(server):
                     ],
                     style={"display": "flex", "align-items": "center", "margin-right": "20px"}
                 ) for category, color in CATEGORY_COLORS.items()
+            ] + [
+                html.Div(
+                    [
+                        html.Div(
+                            style={"display": "inline-block", "width": "20px", "height": "20px",
+                                   "backgroundColor": color, "margin-right": "10px"}
+                        ),
+                        html.Span(net_label, style={"margin-right": "20px"})
+                    ],
+                    style={"display": "flex", "align-items": "center", "margin-right": "20px"}
+                ) for net_label, color in NET_COLORS.items()
             ],
             style={"margin-bottom": "20px", "display": "flex", "flex-wrap": "wrap"}
         ),
@@ -73,7 +95,9 @@ def init_project_dash(server):
 
     # Callback to update the graph
     @dash_app.callback(
-        Output("timeline-graph", "figure"),
+        [Output("timeline-graph", "figure"),
+         Output("date-picker-range", "start_date"),
+         Output("date-picker-range", "end_date")],
         [Input("url", "href"),
          Input("date-picker-range", "start_date"),
          Input("date-picker-range", "end_date"),
@@ -90,18 +114,18 @@ def init_project_dash(server):
                 project_id = int(query_params['project_id'][0])
 
         if not project_id:
-            return go.Figure()
+            return go.Figure(), None, None
 
         # Query only items related to the specific project
         items = db.session.query(Items, Projects.project_name).join(Projects).filter(Projects.project_id == project_id).all()
 
         if not items:
-            return go.Figure()
+            return go.Figure(), None, None
 
         # Convert items to a DataFrame
         df = pd.DataFrame([{
             "Project": project_name,
-            "Item Name": f"{item.item_name} ({item.type})",
+            "Item Name": item.item_name,
             "Type": item.type,
             "Amount": item.amount,
             "Category": item.category,
@@ -109,22 +133,31 @@ def init_project_dash(server):
             "End Date": item.item_end_date
         } for item, project_name in items])
 
-        # Set default values for start_date and end_date if not provided
+        project = db.session.query(Projects.proj_start_date, Projects.proj_end_date).filter(
+            Projects.project_id == project_id).first()
+        project_start_date = project.proj_start_date
+        project_end_date = project.proj_end_date
+
         if not start_date:
-            start_date = df["Start Date"].min()
+            start_date = project_start_date
         else:
             start_date = pd.to_datetime(start_date)
 
         if not end_date:
-            end_date = df["End Date"].max()
+            end_date = project_end_date
         else:
             end_date = pd.to_datetime(end_date)
 
-        # Filter cost items within date range
-        cost_df = df[(df["Type"] == "cost") & (df["Start Date"] >= start_date) & (df["End Date"] <= end_date)]
-
-        # Filter budget items that overlap with the date range
-        budget_df = df[(df["Type"] == "budget") & ((df["Start Date"] <= end_date) & (df["End Date"] >= start_date))]
+        # Apply category filter if categories are selected
+        if categories:
+            cost_df = df[(df["Type"] == "cost") & ((df["Start Date"] <= end_date) & (df["End Date"] >= start_date)) & (
+                df["Category"].isin(categories))]
+            budget_df = df[
+                (df["Type"] == "budget") & ((df["Start Date"] <= end_date) & (df["End Date"] >= start_date)) & (
+                    df["Category"].isin(categories))]
+        else:
+            cost_df = df[(df["Type"] == "cost") & ((df["Start Date"] <= end_date) & (df["End Date"] >= start_date))]
+            budget_df = df[(df["Type"] == "budget") & ((df["Start Date"] <= end_date) & (df["End Date"] >= start_date))]
 
         # Calculate net position based on filtered budgets and costs
         net_value = budget_df["Amount"].sum() - cost_df["Amount"].sum()
@@ -138,7 +171,18 @@ def init_project_dash(server):
             net_color = "blue"
 
         # Create subplots with shared x-axis
-        fig = make_subplots(rows=3, cols=1, shared_xaxes=True, subplot_titles=("Cost Items", "Budget Items", "Net Position"))
+        # Fixed bar height and dynamic figure height calculation
+        fixed_bar_height = 100  # Set a fixed height for each bar
+        num_items = len(cost_df) + len(budget_df) + 1  # +1 for Net Position bar
+        fig_height = max(400, num_items * fixed_bar_height)
+
+        fig = make_subplots(
+            rows=3,
+            cols=1,
+            shared_xaxes=True,
+            subplot_titles=("Cost Items", "Budget Items", "Net Position"),
+            vertical_spacing=0.1  # Adjust spacing between subplots
+        )
 
         # Add cost items as horizontal bars with category-based coloring
         for _, row in cost_df.iterrows():
@@ -150,7 +194,9 @@ def init_project_dash(server):
                 name=row["Category"],
                 marker_color=color,
                 showlegend=False,
-                legendgroup=row["Category"]
+                legendgroup=row["Category"],
+                text=f"{row['Start Date'].strftime('%Y-%m-%d')} - {row['End Date'].strftime('%Y-%m-%d')}",
+                textposition='inside'
             ), row=1, col=1)
 
         # Add budget items as horizontal bars with category-based coloring
@@ -163,7 +209,9 @@ def init_project_dash(server):
                 name=row["Category"],
                 marker_color=color,
                 showlegend=False,
-                legendgroup=row["Category"]
+                legendgroup=row["Category"],
+                text=f"{row['Start Date'].strftime('%Y-%m-%d')} - {row['End Date'].strftime('%Y-%m-%d')}",
+                textposition='inside'
             ), row=2, col=1)
 
         # Add net position as a horizontal bar
@@ -178,13 +226,38 @@ def init_project_dash(server):
 
         # Update layout to ensure shared x-axis and correct ordering of subplots
         fig.update_layout(
+            height=fig_height,  # Set dynamic figure height based on the number of items
             barmode="stack",
             xaxis_title="Amount",
             yaxis_title="Items",
-            title="Project Timeline with Costs, Budgets, and Net Position",
-            bargap=0.2
+            title="Project Costs, Budgets, and Net Position",
+            bargap=0.2,
+            font=dict(size=12),
+            yaxis1=dict(
+                tickmode='array',
+                tickvals=list(range(len(cost_df))),
+                automargin=True,
+                dtick=1
+            ),
+            yaxis2=dict(
+                tickmode='array',
+                tickvals=list(range(len(budget_df))),
+                automargin=True,
+                dtick=1
+            ),
+            yaxis3=dict(
+                tickmode='array',
+                tickvals=[0],
+                automargin=True,
+                dtick=1
+            )
         )
 
-        return fig
+        # Only return project start and end dates if start_date or end_date is not provided
+        if not start_date or not end_date:
+            return fig, project_start_date, project_end_date
+
+        # Otherwise, keep the manually selected date range
+        return fig, no_update, no_update
 
     return dash_app
